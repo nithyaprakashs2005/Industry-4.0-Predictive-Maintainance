@@ -10,6 +10,7 @@ const MonitoringContext = createContext(null);
 let alertIdCounter = 100;
 
 export function MonitoringProvider({ children }) {
+  const [isDemoMode, setIsDemoMode] = useState(true);
   const [sensorData, setSensorData] = useState(() => mockSensorService.getCurrent());
   const [history, setHistory] = useState([]);
   const [scenario, setScenario] = useState('normal');
@@ -30,10 +31,34 @@ export function MonitoringProvider({ children }) {
     lastAlertScenario.current = null;
   }, []);
 
+  const toggleDemoMode = useCallback(() => {
+    setIsDemoMode((prev) => !prev);
+  }, []);
+
+  const resetDemo = useCallback(() => {
+    const freshData = mockSensorService.reset();
+    setScenario('normal');
+    setSensorData(freshData);
+    setHistory([freshData]);
+    setAlerts([]);
+    setPrediction(getPrediction(freshData, 'normal'));
+    lastAlertScenario.current = null;
+  }, []);
+
   useEffect(() => {
     mockSensorService.setUpdateInterval(settings.simulation.updateInterval);
     mockSensorService.setSpeedMultiplier(settings.simulation.speed);
     mockSensorService.setScenario(scenario);
+
+    if (!isDemoMode) {
+      mockSensorService.stop();
+      setSensorData((prev) => ({
+        ...prev,
+        rpm: 0,
+        status: 'normal',
+      }));
+      return;
+    }
 
     const unsubscribe = mockSensorService.subscribe((reading, hist) => {
       setSensorData(reading);
@@ -46,10 +71,10 @@ export function MonitoringProvider({ children }) {
       unsubscribe();
       mockSensorService.stop();
     };
-  }, [scenario, settings.simulation.updateInterval, settings.simulation.speed]);
+  }, [isDemoMode, scenario, settings.simulation.updateInterval, settings.simulation.speed]);
 
   useEffect(() => {
-    if (!settings.simulation.autoFault) return;
+    if (!isDemoMode || !settings.simulation.autoFault) return;
 
     const faultIds = Object.keys(FAULT_SCENARIOS).filter((id) => id !== 'normal');
     const intervalMs = Math.max(settings.simulation.updateInterval * 15, 15000);
@@ -60,7 +85,7 @@ export function MonitoringProvider({ children }) {
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [settings.simulation.autoFault, settings.simulation.updateInterval, changeScenario]);
+  }, [isDemoMode, settings.simulation.autoFault, settings.simulation.updateInterval, changeScenario]);
 
   useEffect(() => {
     const faultScenario = FAULT_SCENARIOS[scenario];
@@ -152,6 +177,10 @@ export function MonitoringProvider({ children }) {
   return (
     <MonitoringContext.Provider
       value={{
+        isDemoMode,
+        setIsDemoMode,
+        toggleDemoMode,
+        resetDemo,
         sensorData,
         history,
         scenario,

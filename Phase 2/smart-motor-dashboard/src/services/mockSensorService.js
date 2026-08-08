@@ -53,6 +53,14 @@ class MockSensorService {
     this.scenario = scenarioId;
   }
 
+  reset() {
+    this.scenario = 'normal';
+    this.targets = { rpm: 0, temperature: 0, torque: 0, vibration: 0 };
+    this.current = { rpm: 0, temperature: 0, torque: 0, vibration: 0 };
+    this.history = [];
+    return this.getCurrent();
+  }
+
   setUpdateInterval(ms) {
     this.updateInterval = ms;
     if (this.intervalId) {

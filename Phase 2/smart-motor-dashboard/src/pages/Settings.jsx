@@ -4,7 +4,7 @@ import { useMonitoring } from '../context/MonitoringContext';
 import PageHeader from '../components/layout/PageHeader';
 
 export default function Settings() {
-  const { settings, updateSettings, defaultSettings } = useMonitoring();
+  const { settings, updateSettings, defaultSettings, isDemoMode, toggleDemoMode } = useMonitoring();
   const [local, setLocal] = useState(settings);
   const [saved, setSaved] = useState(false);
 
@@ -87,8 +87,32 @@ export default function Settings() {
         </div>
 
         <div className="card-industrial p-5">
-          <h3 className="text-sm font-semibold text-industrial-300 mb-4">Simulation</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-industrial-300">Simulation Settings</h3>
+            <button
+              onClick={toggleDemoMode}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
+                isDemoMode
+                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                  : 'bg-slate-100 border-slate-300 text-slate-600'
+              }`}
+            >
+              Demo Mode: {isDemoMode ? 'ON' : 'OFF'}
+            </button>
+          </div>
           <div className="space-y-4">
+            <label className="flex items-center justify-between p-2.5 bg-industrial-800 rounded border border-industrial-700">
+              <div>
+                <span className="text-xs text-industrial-300 font-medium block">Master Demo Simulation</span>
+                <span className="text-[10px] text-industrial-500">Enable or disable all live sensor feeds, rotation and updates</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={isDemoMode}
+                onChange={toggleDemoMode}
+                className="accent-status-info w-4 h-4"
+              />
+            </label>
             <div>
               <div className="flex justify-between mb-1">
                 <label className="text-xs text-industrial-400">Simulation Speed</label>
